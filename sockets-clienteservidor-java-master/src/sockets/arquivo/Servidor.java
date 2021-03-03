@@ -8,11 +8,13 @@ package sockets.arquivo;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import sockets.thread.ThreadSockets;
 
 
 /**
@@ -26,33 +28,57 @@ public class Servidor {
         //1
         ServerSocket srvSocket = new ServerSocket(5566);
         System.out.println("Aguardando envio de arquivo ...");
-        Socket socket = srvSocket.accept();
+        
+        while (true) {
+            //2 - Aguardar solicitações de conexão de clientes 
+            Socket socket = srvSocket.accept();
+            byte[] objectAsByte = new byte[socket.getReceiveBufferSize()];
+            BufferedInputStream bf = new BufferedInputStream(
+               socket.getInputStream());
+            bf.read(objectAsByte);
 
-        //2
-        byte[] objectAsByte = new byte[socket.getReceiveBufferSize()];
-        BufferedInputStream bf = new BufferedInputStream(
-           socket.getInputStream());
-        bf.read(objectAsByte);
+            //3
+            Arquivo arquivo = (Arquivo) getObjectFromByte(objectAsByte);
+            String dir = arquivo.getDiretorioDestino().endsWith("/") ? arquivo
+               .getDiretorioDestino() + arquivo.getNome() : arquivo
+               .getDiretorioDestino() + "/" + arquivo.getNome();
+            
+            if(arquivo.getTipo() == 1){
+            System.out.println("Criando arquivo " + dir);
 
-        //3
-        Arquivo arquivo = (Arquivo) getObjectFromByte(objectAsByte);
-
-        //4
-        String dir = arquivo.getDiretorioDestino().endsWith("/") ? arquivo
-           .getDiretorioDestino() + arquivo.getNome() : arquivo
-           .getDiretorioDestino() + "/" + arquivo.getNome();
-        System.out.println("Escrevendo arquivo " + dir);
-
-        //5
-        FileOutputStream fos = new FileOutputStream(dir);
-        fos.write(arquivo.getConteudo());
-        fos.close();
-
+            FileOutputStream fos = new FileOutputStream(dir);
+            fos.write(arquivo.getConteudo());
+            fos.close();
+            }
+            else if(arquivo.getTipo() == 0){
+            boolean success = (new File(dir)).delete();
+            System.out.println("Deletando arquivo " + dir);
+            if(success == true){
+                System.out.println(dir + " deletado com sucesso!");
+            }
+            else{
+                System.out.println(dir + " não encontrado!");                
+            }
+            }
+            else{
+            System.out.println("Modificando arquivo " + dir);     
+            boolean success = (new File(dir)).delete();
+            if(success == true){
+                System.out.println(dir + " modificado com sucesso!");
+            }
+            else{
+                System.out.println("Não encontrado! criando arquivo " + dir);                
+            }
+            FileOutputStream fos = new FileOutputStream(dir);
+            fos.write(arquivo.getConteudo());
+            fos.close();
+            
+            }
+        }
      } catch (IOException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
      }
-
    }
 
    private static Object getObjectFromByte(byte[] objectAsByte) {

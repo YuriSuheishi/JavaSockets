@@ -11,6 +11,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -32,7 +33,7 @@ import javax.swing.JOptionPane;
  * @author yuris
  */
 public class Cliente {
-        private Arquivo arquivo;
+        private static Arquivo arquivo;
         
 	public static void main(String[] args) throws IOException, InterruptedException {
             WatchService watchService = FileSystems.getDefault().newWatchService();
@@ -49,7 +50,9 @@ public class Cliente {
         while ((key = watchService.take()) != null) {
             for (WatchEvent<?> event : key.pollEvents()) {
                 if( event.kind().toString() == "ENTRY_DELETE"){
-                    System.out.println(event.context() + " deletado");
+                        System.out.println(event.context() + " deletado");    
+                        CriaArquivo(event.context().toString(),0);
+                        EnviarArquivoServidor();
                     //1 - Abrir conexão
 //                    Socket socket = new Socket("127.0.0.1", 54323);
                     
@@ -72,36 +75,40 @@ public class Cliente {
                     
                 }
                 else if(event.kind().toString() == "ENTRY_CREATE"){
-                    try (Socket socket = new Socket("127.0.0.1", 54323)) {
-                        //2 - Definir stream de saída de dados do cliente
-                        DataOutputStream saida = new DataOutputStream(socket.getOutputStream());
-                        saida.writeUTF(event.context() + " criado"); //Enviar  mensagem em minúsculo para o servidor
-                        
-                        //3 - Definir stream de entrada de dados no cliente
-                        DataInputStream entrada = new DataInputStream(socket.getInputStream());
-                        String novaMensagem = entrada.readUTF();//Receber mensagem em maiúsculo do servidor
-                        System.out.println(novaMensagem); //Mostrar mensagem em maiúsculo no cliente
-                    }
+                        System.out.println(event.context() + " criado");       
+                        CriaArquivo(event.context().toString(),1);
+                        EnviarArquivoServidor();
+//                    try (Socket socket = new Socket("127.0.0.1", 54323)) {
+//                        //2 - Definir stream de saída de dados do cliente
+//                        DataOutputStream saida = new DataOutputStream(socket.getOutputStream());
+//                        saida.writeUTF(event.context() + " criado"); //Enviar  mensagem em minúsculo para o servidor
+//                        
+//                        //3 - Definir stream de entrada de dados no cliente
+//                        DataInputStream entrada = new DataInputStream(socket.getInputStream());
+//                        String novaMensagem = entrada.readUTF();//Receber mensagem em maiúsculo do servidor
+//                        System.out.println(novaMensagem); //Mostrar mensagem em maiúsculo no cliente
+//                    }
                     
                     
                     
                 }
                 else{
-                    System.out.println(event.context() + " modificado");                        
+                    System.out.println(event.context() + " modificado");     
+                    CriaArquivo(event.context().toString(),2);
+                    EnviarArquivoServidor();                      
                 }
             }
             key.reset();
         }
         }
         
-        private void CriaArquivo() {
+        private static void CriaArquivo(String fileName, int tipo) throws FileNotFoundException, IOException {
             FileInputStream fis;
-            try {               
-                    JFileChooser fileChooser = new JFileChooser();
-                    int opt = fileChooser.showOpenDialog(null);
-                    if(opt == JFileChooser.APPROVE_OPTION){
-                    File file = fileChooser.getSelectedFile();
-
+                   System.out.println("Arquivo: " +fileName);
+                   File file = new File("../Cliente/" + fileName);
+                   
+                   arquivo = new Arquivo();
+                   if(tipo!= 0){
                    byte[] bFile = new byte[(int) file.length()];
                    fis = new FileInputStream(file);
                    fis.read(bFile);
@@ -109,24 +116,20 @@ public class Cliente {
 
                    long kbSize = file.length() / 1024;
 
-                   arquivo = new Arquivo();
                    arquivo.setConteudo(bFile);
                    arquivo.setDataHoraUpload(new Date());
-                   arquivo.setNome(file.getName());
                    arquivo.setTamanhoKB(kbSize);
-                   arquivo.setIpDestino("127.0.0.1");
-                   arquivo.setPortaDestino("54323");
-                   arquivo.setDiretorioDestino("Servidor/");
-               }
-
-            } catch (Exception e) {
-                     e.printStackTrace();
-            }
+                   }
+                   arquivo.setDiretorioDestino("../Servidor");
+                   arquivo.setTipo(tipo);
+                   arquivo.setNome(fileName);
+                       
+                   
          }
         
-        private void EnviarArquivoServidor(){
+        private static void EnviarArquivoServidor(){
             try {
-                Socket socket = new Socket("127.0.0.1", 54323);
+                Socket socket = new Socket("127.0.0.1", 5566);
 
                 BufferedOutputStream bf = new BufferedOutputStream
                 (socket.getOutputStream());
@@ -144,7 +147,7 @@ public class Cliente {
            
         }
 
-        private byte[] serializarArquivo(){
+        private static byte[] serializarArquivo(){
            try {
               ByteArrayOutputStream bao = new ByteArrayOutputStream();
               ObjectOutputStream ous;
@@ -159,65 +162,3 @@ public class Cliente {
         }
 
 }
-
-
-/*
- private static final long serialVersionUID = 1L;
-
-    
-    
-    private void enviarArquivoServidor(){
-   if (validaArquivo()){
-    try {
-        Socket socket = new Socket(jTextFieldIP.getText().trim(),
-          Integer.parseInt(jTextFieldPorta.getText().trim()));
-
-        BufferedOutputStream bf = new BufferedOutputStream
-        (socket.getOutputStream());
-
-        byte[] bytea = serializarArquivo();
-        bf.write(bytea);
-        bf.flush();
-        bf.close();
-        socket.close();
-    } catch (UnknownHostException e) {
-        e.printStackTrace();
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-   }
-}
-
-private byte[] serializarArquivo(){
-   try {
-      ByteArrayOutputStream bao = new ByteArrayOutputStream();
-      ObjectOutputStream ous;
-      ous = new ObjectOutputStream(bao);
-      ous.writeObject(arquivo);
-      return bao.toByteArray();
-   } catch (IOException e) {
-      e.printStackTrace();
-   }
-
-   return null;
-}
-
-        private boolean validaArquivo(){
-        if (arquivo.getTamanhoKB() > tamanhoPermitidoKB){
-           JOptionPane.showMessageDialog(this,
-            "Tamanho máximo permitido atingido ("+(tamanhoPermitidoKB/1024)+")");
-           return false;
-        }else{
-           return true;
-        }
-     }
-
-
-     public static void main(String args[]) {
-         java.awt.EventQueue.invokeLater(new Runnable() {
-           public void run() {
-             
-           }
-         });
-     }
-}*/

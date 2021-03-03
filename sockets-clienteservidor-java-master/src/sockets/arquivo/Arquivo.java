@@ -24,7 +24,6 @@ public class Arquivo implements Serializable {
    private byte[] conteudo;
    private transient long tamanhoKB;
    private transient Date dataHoraUpload;
-   private String diretorioDestino;
    private int tipo;
    
    public int getTipo(){
@@ -56,11 +55,5 @@ public class Arquivo implements Serializable {
    }
    public void setDataHoraUpload(Date dataHoraUpload) {
              this.dataHoraUpload = dataHoraUpload;
-   }
-   public String getDiretorioDestino() {
-             return diretorioDestino;
-   }
-   public void setDiretorioDestino(String diretorioDestino) {
-             this.diretorioDestino = diretorioDestino;
    }
 }

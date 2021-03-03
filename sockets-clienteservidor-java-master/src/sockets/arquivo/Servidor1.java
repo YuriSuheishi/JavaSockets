@@ -5,35 +5,29 @@
  */
 package sockets.arquivo;
 
-
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Date;
-import sockets.thread.ThreadSockets;
-
 
 /**
  *
  * @author yuris
  */
-public class Servidor {
+public class Servidor1 {
 
    public static void main(String args[]) {
+       servidor(5555, "../Servidor1/");
+   }
+   
+   public static void servidor(int port, String pasta){
      try {
         //1
-        ServerSocket srvSocket = new ServerSocket(5566);
+        ServerSocket srvSocket = new ServerSocket(port);
         System.out.println("Aguardando envio de arquivo ...");
         
         while (true) {
@@ -46,18 +40,14 @@ public class Servidor {
 
             //3
             Arquivo arquivo = (Arquivo) getObjectFromByte(objectAsByte);
-            String dir = "../Servidor/" + arquivo.getNome();
+            String dir = pasta + arquivo.getNome();
             
-            //criando arquivo
             if(arquivo.getTipo() == 1){
             System.out.println("Criando arquivo " + dir);
 
             FileOutputStream fos = new FileOutputStream(dir);
             fos.write(arquivo.getConteudo());
             fos.close();
-            //mandando para servidores secundarios
-            EnviarArquivoServidor(arquivo, 5555);     
-            EnviarArquivoServidor(arquivo, 5554);           
             }
             else if(arquivo.getTipo() == 0){
             boolean success = (new File(dir)).delete();
@@ -68,9 +58,6 @@ public class Servidor {
             else{
                 System.out.println(dir + " não encontrado!");                
             }
-            //mandando para servidores secundarios
-            EnviarArquivoServidor(arquivo, 5555);     
-            EnviarArquivoServidor(arquivo, 5554);       
             }
             else{
             System.out.println("Modificando arquivo " + dir);     
@@ -84,10 +71,6 @@ public class Servidor {
             FileOutputStream fos = new FileOutputStream(dir);
             fos.write(arquivo.getConteudo());
             fos.close();
-            
-            //mandando para servidores secundarios
-            EnviarArquivoServidor(arquivo, 5555);     
-            EnviarArquivoServidor(arquivo, 5554);       
             
             }
         }
@@ -120,39 +103,5 @@ public class Servidor {
      return obj;
 
    }
-        
-        private static void EnviarArquivoServidor(Arquivo arquivo, int porta){
-            try {
-                Socket socket = new Socket("127.0.0.1", porta);
-
-                BufferedOutputStream bf = new BufferedOutputStream
-                (socket.getOutputStream());
-
-                byte[] bytea = serializarArquivo(arquivo);
-                bf.write(bytea);
-                bf.flush();
-                bf.close();
-                socket.close();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-           
-        }
-
-        private static byte[] serializarArquivo(Arquivo arquivo){
-           try {
-              ByteArrayOutputStream bao = new ByteArrayOutputStream();
-              ObjectOutputStream ous;
-              ous = new ObjectOutputStream(bao);
-              ous.writeObject(arquivo);
-              return bao.toByteArray();
-           } catch (IOException e) {
-              e.printStackTrace();
-           }
-
-           return null;
-        }
 
 }

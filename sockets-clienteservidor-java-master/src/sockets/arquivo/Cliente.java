@@ -120,7 +120,6 @@ public class Cliente {
                    arquivo.setDataHoraUpload(new Date());
                    arquivo.setTamanhoKB(kbSize);
                    }
-                   arquivo.setDiretorioDestino("../Servidor");
                    arquivo.setTipo(tipo);
                    arquivo.setNome(fileName);
                        

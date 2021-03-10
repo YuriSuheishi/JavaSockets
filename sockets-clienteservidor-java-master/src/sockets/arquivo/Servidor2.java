@@ -21,7 +21,7 @@ import java.net.Socket;
 public class Servidor2 {
 
    public static void main(String args[]) {
-       servidor(5554, "../Servidor2/");
+       servidor(2222, "../Servidor2/");
    }
    
    public static void servidor(int port, String pasta){

@@ -36,10 +36,12 @@ public class Cliente {
         private static Arquivo arquivo;
         
 	public static void main(String[] args) throws IOException, InterruptedException {
-            WatchService watchService = FileSystems.getDefault().newWatchService();
+          WatchService watchService = FileSystems.getDefault().newWatchService();
 
+          //local da pasta cliente
          Path path = Paths.get("../Cliente");
 
+        //Habilitando Watcher
         path.register(
           watchService, 
             StandardWatchEventKinds.ENTRY_CREATE, 
@@ -47,54 +49,29 @@ public class Cliente {
                 StandardWatchEventKinds.ENTRY_MODIFY);
 
         WatchKey key;
+        //verifica o que aconteceu
         while ((key = watchService.take()) != null) {
             for (WatchEvent<?> event : key.pollEvents()) {
                 if( event.kind().toString() == "ENTRY_DELETE"){
                         System.out.println(event.context() + " deletado");    
+                        //cria um objeto do tipo arquivo
                         CriaArquivo(event.context().toString(),0);
+                        //transforma em byte e envia para o servidor
                         EnviarArquivoServidor();
-                    //1 - Abrir conexão
-//                    Socket socket = new Socket("127.0.0.1", 54323);
-                    
-                    //2 - Definir stream de saída de dados do cliente
-//                    ObjectOutputStream saida = new ObjectOutputStream(socket.getOutputStream());
-//                    Pessoa p = new Pessoa("Rafael Vargas", 38);
-//                    saida.writeObject(p); 
-
-                    //3 - Definir stream de entrada de dados no cliente
-//                    DataInputStream entrada = new DataInputStream(socket.getInputStream());
-//                    String novaMensagem = entrada.readUTF();//Receber mensagem em maiúsculo do servidor
-//                    System.out.println(novaMensagem); //Mostrar mensagem em maiúsculo no cliente
-
-                    //4 - Fechar streams de entrada e saída de dados
-//                    entrada.close();
-//                    saida.close();
-
-                    //5 - Fechar o socket
-//                    socket.close();
                     
                 }
                 else if(event.kind().toString() == "ENTRY_CREATE"){
-                        System.out.println(event.context() + " criado");       
+                        System.out.println(event.context() + " criado");  
+                        //cria um objeto do tipo arquivo     
                         CriaArquivo(event.context().toString(),1);
+                        //transforma em byte e envia para o servidor
                         EnviarArquivoServidor();
-//                    try (Socket socket = new Socket("127.0.0.1", 54323)) {
-//                        //2 - Definir stream de saída de dados do cliente
-//                        DataOutputStream saida = new DataOutputStream(socket.getOutputStream());
-//                        saida.writeUTF(event.context() + " criado"); //Enviar  mensagem em minúsculo para o servidor
-//                        
-//                        //3 - Definir stream de entrada de dados no cliente
-//                        DataInputStream entrada = new DataInputStream(socket.getInputStream());
-//                        String novaMensagem = entrada.readUTF();//Receber mensagem em maiúsculo do servidor
-//                        System.out.println(novaMensagem); //Mostrar mensagem em maiúsculo no cliente
-//                    }
-                    
-                    
-                    
                 }
                 else{
-                    System.out.println(event.context() + " modificado");     
+                    System.out.println(event.context() + " modificado");  
+                        //cria um objeto do tipo arquivo   
                     CriaArquivo(event.context().toString(),2);
+                        //transforma em byte e envia para o servidor
                     EnviarArquivoServidor();                      
                 }
             }
@@ -128,7 +105,8 @@ public class Cliente {
         
         private static void EnviarArquivoServidor(){
             try {
-                Socket socket = new Socket("127.0.0.1", 5566);
+                //socket do servidor principal
+                Socket socket = new Socket("127.0.0.1", 1111);
 
                 BufferedOutputStream bf = new BufferedOutputStream
                 (socket.getOutputStream());

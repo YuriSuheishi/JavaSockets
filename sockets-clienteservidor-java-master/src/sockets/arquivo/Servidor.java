@@ -32,8 +32,8 @@ public class Servidor {
 
    public static void main(String args[]) {
      try {
-        //1
-        ServerSocket srvSocket = new ServerSocket(5566);
+        //1 - Habilita server socket
+        ServerSocket srvSocket = new ServerSocket(1111);
         System.out.println("Aguardando envio de arquivo ...");
         
         while (true) {
@@ -44,50 +44,44 @@ public class Servidor {
                socket.getInputStream());
             bf.read(objectAsByte);
 
-            //3
+            //3 - 
             Arquivo arquivo = (Arquivo) getObjectFromByte(objectAsByte);
             String dir = "../Servidor/" + arquivo.getNome();
             
+            //mandando arquivo para servidores secundarios
+            EnviarArquivoServidor(arquivo, 2221);     
+            EnviarArquivoServidor(arquivo, 2222);  
+            
             //criando arquivo
             if(arquivo.getTipo() == 1){
-            System.out.println("Criando arquivo " + dir);
+                    System.out.println("Criando arquivo " + dir);
 
-            FileOutputStream fos = new FileOutputStream(dir);
-            fos.write(arquivo.getConteudo());
-            fos.close();
-            //mandando para servidores secundarios
-            EnviarArquivoServidor(arquivo, 5555);     
-            EnviarArquivoServidor(arquivo, 5554);           
+                    FileOutputStream fos = new FileOutputStream(dir);
+                    fos.write(arquivo.getConteudo());
+                    fos.close();         
             }
             else if(arquivo.getTipo() == 0){
-            boolean success = (new File(dir)).delete();
-            System.out.println("Deletando arquivo " + dir);
-            if(success == true){
-                System.out.println(dir + " deletado com sucesso!");
+                    boolean success = (new File(dir)).delete();
+                    System.out.println("Deletando arquivo " + dir);
+                    if(success == true){
+                        System.out.println(dir + " deletado com sucesso!");
+                    }
+                    else{
+                        System.out.println(dir + " não encontrado!");                
+                    } 
             }
             else{
-                System.out.println(dir + " não encontrado!");                
-            }
-            //mandando para servidores secundarios
-            EnviarArquivoServidor(arquivo, 5555);     
-            EnviarArquivoServidor(arquivo, 5554);       
-            }
-            else{
-            System.out.println("Modificando arquivo " + dir);     
-            boolean success = (new File(dir)).delete();
-            if(success == true){
-                System.out.println(dir + " modificado com sucesso!");
-            }
-            else{
-                System.out.println("Não encontrado! criando arquivo " + dir);                
-            }
-            FileOutputStream fos = new FileOutputStream(dir);
-            fos.write(arquivo.getConteudo());
-            fos.close();
-            
-            //mandando para servidores secundarios
-            EnviarArquivoServidor(arquivo, 5555);     
-            EnviarArquivoServidor(arquivo, 5554);       
+                    System.out.println("Modificando arquivo " + dir);     
+                    boolean success = (new File(dir)).delete();
+                    if(success == true){
+                        System.out.println(dir + " modificado com sucesso!");
+                    }
+                    else{
+                        System.out.println("Não encontrado! criando arquivo " + dir);                
+                    }
+                    FileOutputStream fos = new FileOutputStream(dir);
+                    fos.write(arquivo.getConteudo());
+                    fos.close();    
             
             }
         }
